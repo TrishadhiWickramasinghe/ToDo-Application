@@ -73,7 +73,7 @@ export function TodoCard({
             size="sm"
             variant="secondary"
             onClick={() => onEdit(todo)}
-            disabled={isLoading}
+            disabled={isLoading || isCompleted}
           >
             ✏️
           </Button>
