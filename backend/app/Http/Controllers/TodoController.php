@@ -3,10 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Todo;
+use App\Models\TodoImage;
 use App\Http\Requests\CreateTodoRequest;
 use App\Http\Requests\UpdateTodoRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class TodoController extends Controller
 {
@@ -33,33 +36,42 @@ class TodoController extends Controller
 
             // Create new todo
             $todo = Todo::create([
-                'user_id' => $user->id,
-                'title' => $request->validated('title'),
-                'description' => $request->validated('description'),
-                'status' => 'pending',
-                'start_date_time' => $request->validated('startDateTime')
-
+                'user_id'         => $user->id,
+                'title'           => $request->validated('title'),
+                'description'     => $request->validated('description'),
+                'status'          => 'pending',
+                'start_date_time' => $request->validated('startDateTime'),
             ]);
+
+            // ── Handle image uploads ──────────────────────────────────────────
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $file) {
+                    // Store in storage/app/public/todo_images/<uuid>.<ext>
+                    $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
+                    $path     = $file->storeAs('todo_images', $filename, 'public');
+
+                    $todo->images()->create([
+                        'path'          => $path,
+                        'original_name' => $file->getClientOriginalName(),
+                        'size'          => $file->getSize(),
+                        'mime_type'     => $file->getMimeType(),
+                    ]);
+                }
+            }
+
+            // Reload images so they appear in the response
+            $todo->load('images');
 
             return response()->json([
                 'success' => true,
                 'message' => 'Todo created successfully',
-                'data' => [
-                    'id' => $todo->id,
-                    'title' => $todo->title,
-                    'description' => $todo->description,
-                    'status' => $todo->status,
-                    'user_id' => $todo->user_id,
-                    'start_date_time' => $todo->start_date_time,
-                    'created_at' => $todo->created_at,
-                    'updated_at' => $todo->updated_at,
-                ],
+                'data'    => $todo,
             ], 201);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to create todo',
-                'error' => $e->getMessage(),
+                'error'   => $e->getMessage(),
             ], 500);
         }
     }
@@ -82,19 +94,21 @@ class TodoController extends Controller
                 ], 401);
             }
 
+            // Eager-load images so the list returns image URLs too
             $todos = Todo::where('user_id', $user->id)
+                ->with('images')
                 ->orderBy('created_at', 'desc')
                 ->get();
 
             return response()->json([
                 'success' => true,
-                'data' => $todos,
+                'data'    => $todos,
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to fetch todos',
-                'error' => $e->getMessage(),
+                'error'   => $e->getMessage(),
             ], 500);
         }
     }
@@ -118,15 +132,17 @@ class TodoController extends Controller
                 ], 403);
             }
 
+            $todo->load('images');
+
             return response()->json([
                 'success' => true,
-                'data' => $todo,
+                'data'    => $todo,
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to fetch todo',
-                'error' => $e->getMessage(),
+                'error'   => $e->getMessage(),
             ], 500);
         }
     }
@@ -165,17 +181,18 @@ class TodoController extends Controller
             }
 
             $todo->save();
+            $todo->load('images');
 
             return response()->json([
                 'success' => true,
                 'message' => 'Todo updated successfully',
-                'data' => $todo,
+                'data'    => $todo,
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to update todo',
-                'error' => $e->getMessage(),
+                'error'   => $e->getMessage(),
             ], 500);
         }
     }
@@ -199,6 +216,11 @@ class TodoController extends Controller
                 ], 403);
             }
 
+            // Delete image files from disk before removing the record
+            foreach ($todo->images as $image) {
+                Storage::disk('public')->delete($image->path);
+            }
+
             $todo->delete();
 
             return response()->json([
@@ -209,7 +231,7 @@ class TodoController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to delete todo',
-                'error' => $e->getMessage(),
+                'error'   => $e->getMessage(),
             ], 500);
         }
     }

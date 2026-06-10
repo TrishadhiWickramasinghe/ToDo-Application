@@ -2,12 +2,11 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['title', 'description', 'status', 'user_id', 'start_date_time'])]
+#[\Illuminate\Database\Eloquent\Attributes\Fillable(['title', 'description', 'status', 'user_id', 'start_date_time'])]
 class Todo extends Model
 {
     use \Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -40,5 +39,15 @@ class Todo extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the images attached to this todo.
+     *
+     * @return HasMany
+     */
+    public function images(): HasMany
+    {
+        return $this->hasMany(TodoImage::class);
     }
 }

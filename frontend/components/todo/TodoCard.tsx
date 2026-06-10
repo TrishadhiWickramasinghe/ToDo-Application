@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Todo } from '@/services/todoService';
 import { Button } from '@/components/common/Button';
 
@@ -54,6 +54,8 @@ export function TodoCard({
   onToggleStatus,
   isLoading = false,
 }: TodoCardProps) {
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+
   const isCompleted = todo.status === 'completed';
   const scheduleStatus = isCompleted ? null : getScheduleStatus(todo.start_date_time);
 
@@ -149,6 +151,27 @@ export function TodoCard({
               </p>
             )}
 
+            {/* Images */}
+            {todo.images && todo.images.length > 0 && (
+              <div className={`mt-3 flex flex-wrap gap-2 ${isCompleted ? 'opacity-50' : ''}`}>
+                {todo.images.map((img) => (
+                  <button
+                    key={img.id}
+                    onClick={() => setLightboxImage(img.url)}
+                    className="relative w-16 h-16 rounded-md overflow-hidden border border-gray-200 hover:ring-2 hover:ring-blue-500 transition-all focus:outline-none"
+                    title={img.original_name}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={img.url}
+                      alt={img.original_name}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
+
             {/* ── Meta row ── */}
             <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5">
 
@@ -232,6 +255,32 @@ export function TodoCard({
       {isLoading && (
         <div className="h-0.5 bg-blue-100 overflow-hidden rounded-b-xl">
           <div className="h-full bg-blue-500 animate-pulse" />
+        </div>
+      )}
+
+      {/* ── Lightbox ── */}
+      {lightboxImage && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+          onClick={() => setLightboxImage(null)}
+        >
+          <div className="relative max-w-4xl max-h-full">
+            <button
+              className="absolute -top-10 right-0 text-white hover:text-gray-300 p-2 focus:outline-none"
+              onClick={() => setLightboxImage(null)}
+            >
+              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={lightboxImage}
+              alt="Expanded view"
+              className="max-w-full max-h-[85vh] rounded-lg shadow-2xl object-contain"
+              onClick={(e) => e.stopPropagation()} // prevent closing when clicking the image itself
+            />
+          </div>
         </div>
       )}
     </div>

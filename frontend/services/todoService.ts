@@ -1,5 +1,17 @@
 import axiosInstance from './axiosInstance';
 
+export interface TodoImage {
+  id: number;
+  todo_id: number;
+  path: string;
+  original_name: string;
+  size: number;
+  mime_type: string;
+  url: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Todo {
   id: number;
   user_id: number;
@@ -7,6 +19,7 @@ export interface Todo {
   description: string;
   status: 'pending' | 'completed';
   start_date_time: string | null;
+  images?: TodoImage[];
   created_at: string;
   updated_at: string;
 }
