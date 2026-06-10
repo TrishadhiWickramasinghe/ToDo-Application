@@ -7,6 +7,7 @@ import { AxiosError } from 'axios';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import { DateTimePicker } from '@/components/common/DateTimePicker';
+import { ImageUploader, UploadedImage } from '@/components/common/ImageUploader';
 import { todoService, CreateTodoRequest } from '@/services/todoService';
 import { dateToBackend } from '@/utils/dateUtils';
 import toast from 'react-hot-toast';
@@ -60,6 +61,7 @@ export default function CreateTodoPage() {
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [images, setImages] = useState<UploadedImage[]>([]);
 
   // ── Handlers ────────────────────────────────────────────────────────────────
 
@@ -96,6 +98,8 @@ export default function CreateTodoPage() {
         description: formData.description.trim(),
         startDateTime:
           dateStr && timeStr ? (`${dateStr}T${timeStr}` as unknown as Date) : null,
+        // Images are attached separately as FormData when the backend is ready
+        images: images.map((img) => img.file),
       };
 
       await todoService.createTodo(payload);
@@ -286,6 +290,21 @@ export default function CreateTodoPage() {
             error={errors.startDateTime}
             className="mb-4"
           />
+
+          {/* Images */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">
+              Attachments
+              <span className="text-gray-400 font-normal ml-1">(optional · up to 5 images)</span>
+            </label>
+            <ImageUploader
+              images={images}
+              onChange={setImages}
+              maxFiles={5}
+              maxSizeMB={5}
+              disabled={isLoading}
+            />
+          </div>
 
           {/* Tip box */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
