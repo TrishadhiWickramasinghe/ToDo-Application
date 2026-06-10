@@ -25,6 +25,7 @@ class UpdateTodoRequest extends FormRequest
             'title' => 'sometimes|required|string|min:2|max:100',
             'description' => 'nullable|string|max:500',
             'status' => 'sometimes|required|in:pending,completed',
+            'startDateTime' => 'nullable|date',
         ];
     }
 
@@ -41,6 +42,7 @@ class UpdateTodoRequest extends FormRequest
             'title.max' => 'Title must not exceed 100 characters',
             'description.max' => 'Description must not exceed 500 characters',
             'status.in' => 'Status must be either pending or completed',
+            'startDateTime.date' => 'Start date and time must be a valid date',
         ];
     }
 }

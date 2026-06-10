@@ -22,8 +22,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const loadStats = async () => {
       try {
-        const response = await todoService.getTodos();
-        const allTodos = response.data || response;
+        const allTodos = await todoService.getTodos();
         const completedCount = allTodos.filter(
           (t: any) => t.status === 'completed'
         ).length;
@@ -38,6 +37,7 @@ export default function DashboardPage() {
         });
       } catch (error) {
         console.error('Error loading stats:', error);
+        toast.error('Failed to load statistics');
       } finally {
         setIsLoading(false);
       }

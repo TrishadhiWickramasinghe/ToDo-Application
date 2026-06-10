@@ -16,7 +16,7 @@ import toast from 'react-hot-toast';
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type FilterValue = 'all' | 'pending' | 'completed';
-type SortValue   = 'date' | 'title';
+type SortValue   = 'date' | 'title' | 'start_date';
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -50,6 +50,7 @@ export default function TodosPage() {
     try {
       const data = await todoService.getTodos();
       setTodos(data);
+      console.log(data);
     } catch (err) {
       const error = err as AxiosError<{ message?: string }>;
       const msg = error.response?.data?.message ?? 'Failed to load todos.';
@@ -86,6 +87,14 @@ export default function TodosPage() {
         (a, b) =>
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
+    } else if (sortBy === 'start_date') {
+      // Todos with a start date come first (earliest first); no-date todos go last
+      result.sort((a, b) => {
+        if (!a.start_date_time && !b.start_date_time) return 0;
+        if (!a.start_date_time) return 1;
+        if (!b.start_date_time) return -1;
+        return new Date(a.start_date_time).getTime() - new Date(b.start_date_time).getTime();
+      });
     } else {
       result.sort((a, b) => a.title.localeCompare(b.title));
     }
@@ -137,10 +146,14 @@ export default function TodosPage() {
 
   // ── Submit edit ────────────────────────────────────────────────────────────
   const handleEditSubmit = useCallback(
-    async (id: number, title: string, description: string) => {
+    async (id: number, title: string, description: string, startDateTime: string | null) => {
       setIsEditLoading(true);
       try {
-        const updated = await todoService.updateTodo(id, { title, description });
+        const updated = await todoService.updateTodo(id, {
+          title,
+          description,
+          startDateTime: startDateTime as any,
+        });
         setTodos((prev) => prev.map((t) => (t.id === id ? updated : t)));
         toast.success('Todo updated! ✏️');
         handleCloseEdit();
@@ -150,13 +163,11 @@ export default function TodosPage() {
           errors?: Record<string, string[]>;
         }>;
         if (error.response?.status === 422 && error.response.data?.errors) {
-          // Surface the first validation message so the modal can display it
           const firstMsg = Object.values(error.response.data.errors)[0]?.[0];
           toast.error(firstMsg ?? 'Validation error.');
         } else {
           toast.error(error.response?.data?.message ?? 'Failed to update todo.');
         }
-        // Re-throw so EditTodoModal can keep itself open
         throw err;
       } finally {
         setIsEditLoading(false);
@@ -315,6 +326,7 @@ export default function TodosPage() {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
             >
               <option value="date">📅 Newest First</option>
+              <option value="start_date">⏰ By Start Date</option>
               <option value="title">🔤 Alphabetical</option>
             </select>
           </div>

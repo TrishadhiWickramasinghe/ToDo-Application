@@ -6,6 +6,7 @@ export interface Todo {
   title: string;
   description: string;
   status: 'pending' | 'completed';
+  start_date_time: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -13,12 +14,14 @@ export interface Todo {
 export interface CreateTodoRequest {
   title: string;
   description: string;
+  startDateTime?: Date | null;
 }
 
 export interface UpdateTodoRequest {
   title?: string;
   description?: string;
   status?: 'pending' | 'completed';
+  startDateTime?: Date | null;
 }
 
 export interface ApiResponse<T> {
@@ -30,10 +33,12 @@ export interface ApiResponse<T> {
 export const todoService = {
   getTodos: async (status?: string): Promise<Todo[]> => {
     try {
-      const params = status ? { status } : {};
-      const response = await axiosInstance.get('/todos', { params });
+      const response = await axiosInstance.get<{ data: Todo[] } | Todo[]>(
+        '/todos',
+        status ? { params: { status } } : undefined
+      );
       // Handle both nested data format and direct array format
-      const data = response.data.data || response.data;
+      const data = (response.data as any).data || response.data;
       return Array.isArray(data) ? data : [];
     } catch (error) {
       throw error;
@@ -41,16 +46,17 @@ export const todoService = {
   },
 
   getTodoById: async (id: number): Promise<Todo> => {
-    const response = await axiosInstance.get(`/todos/${id}`);
-    const data = response.data.data || response.data;
+    const response = await axiosInstance.get<{ data: Todo } | Todo>(`/todos/${id}`);
+    const data = (response.data as any).data || response.data;
     return data;
   },
 
   createTodo: async (data: CreateTodoRequest): Promise<Todo> => {
     try {
-      const response = await axiosInstance.post('/todos', data);
+      console.log(data);
+      const response = await axiosInstance.post<{ data: Todo } | Todo>('/todos', data);
       // Handle nested data.data format from Laravel response
-      const todoData = response.data.data || response.data;
+      const todoData = (response.data as any).data || response.data;
       return todoData;
     } catch (error) {
       throw error;
@@ -58,8 +64,8 @@ export const todoService = {
   },
 
   updateTodo: async (id: number, data: UpdateTodoRequest): Promise<Todo> => {
-    const response = await axiosInstance.put(`/todos/${id}`, data);
-    const todoData = response.data.data || response.data;
+    const response = await axiosInstance.put<{ data: Todo } | Todo>(`/todos/${id}`, data);
+    const todoData = (response.data as any).data || response.data;
     return todoData;
   },
 
@@ -68,8 +74,8 @@ export const todoService = {
   },
 
   updateStatus: async (id: number, status: 'pending' | 'completed'): Promise<Todo> => {
-    const response = await axiosInstance.put(`/todos/${id}`, { status });
-    const todoData = response.data.data || response.data;
+    const response = await axiosInstance.put<{ data: Todo } | Todo>(`/todos/${id}`, { status });
+    const todoData = (response.data as any).data || response.data;
     return todoData;
   },
 };

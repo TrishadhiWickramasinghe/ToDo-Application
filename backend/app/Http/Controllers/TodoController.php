@@ -6,6 +6,7 @@ use App\Models\Todo;
 use App\Http\Requests\CreateTodoRequest;
 use App\Http\Requests\UpdateTodoRequest;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 
 class TodoController extends Controller
 {
@@ -18,6 +19,7 @@ class TodoController extends Controller
      */
     public function store(CreateTodoRequest $request): JsonResponse
     {
+        Log::info($request->all());
         try {
             // Get authenticated user
             $user = auth('sanctum')->user();
@@ -35,6 +37,8 @@ class TodoController extends Controller
                 'title' => $request->validated('title'),
                 'description' => $request->validated('description'),
                 'status' => 'pending',
+                'start_date_time' => $request->validated('startDateTime')
+
             ]);
 
             return response()->json([
@@ -46,6 +50,7 @@ class TodoController extends Controller
                     'description' => $todo->description,
                     'status' => $todo->status,
                     'user_id' => $todo->user_id,
+                    'start_date_time' => $todo->start_date_time,
                     'created_at' => $todo->created_at,
                     'updated_at' => $todo->updated_at,
                 ],
@@ -146,7 +151,6 @@ class TodoController extends Controller
                 ], 403);
             }
 
-            // Update only provided fields
             if ($request->has('title')) {
                 $todo->title = $request->validated('title');
             }
@@ -155,6 +159,9 @@ class TodoController extends Controller
             }
             if ($request->has('status')) {
                 $todo->status = $request->validated('status');
+            }
+            if ($request->has('startDateTime')) {
+                $todo->start_date_time = $request->validated('startDateTime');
             }
 
             $todo->save();

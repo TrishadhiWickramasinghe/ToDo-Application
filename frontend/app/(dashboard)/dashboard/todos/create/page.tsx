@@ -6,7 +6,9 @@ import { useRouter } from 'next/navigation';
 import { AxiosError } from 'axios';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
+import { DateTimePicker } from '@/components/common/DateTimePicker';
 import { todoService, CreateTodoRequest } from '@/services/todoService';
+import { dateToBackend } from '@/utils/dateUtils';
 import toast from 'react-hot-toast';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -14,11 +16,13 @@ import toast from 'react-hot-toast';
 interface FormData {
   title: string;
   description: string;
+  startDateTime: Date | null;
 }
 
 interface FormErrors {
   title?: string;
   description?: string;
+  startDateTime?: string;
   general?: string;
 }
 
@@ -48,10 +52,11 @@ function validateForm(data: FormData): FormErrors {
 
 export default function CreateTodoPage() {
   const router = useRouter();
-
+//const [selectedDate, setSelectedDate] = useState(null);
   const [formData, setFormData] = useState<FormData>({
     title: '',
     description: '',
+     startDateTime: null,
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -83,9 +88,14 @@ export default function CreateTodoPage() {
     setErrors({});
 
     try {
+      // Serialize Date → ISO string so JSON.stringify sends a proper date string
+      // (dateToBackend returns { date, time } but backend accepts 'nullable|date' ISO strings too)
+      const { date: dateStr, time: timeStr } = dateToBackend(formData.startDateTime);
       const payload: CreateTodoRequest = {
         title: formData.title.trim(),
         description: formData.description.trim(),
+        startDateTime:
+          dateStr && timeStr ? (`${dateStr}T${timeStr}` as unknown as Date) : null,
       };
 
       await todoService.createTodo(payload);
@@ -256,6 +266,26 @@ export default function CreateTodoPage() {
               </p>
             </div>
           </div>
+
+          {/* Date & Time */}
+          <DateTimePicker
+            label="Start Date & Time"
+            selected={formData.startDateTime}
+            onChange={(date) => {
+              setFormData((prev) => ({ ...prev, startDateTime: date }));
+              // Clear date error as user selects
+              if (errors.startDateTime) {
+                setErrors((prev) => ({ ...prev, startDateTime: undefined }));
+              }
+            }}
+            disabled={isLoading}
+            disablePastDates={true}
+            showTimeSelect={true}
+            timeFormat="24h"
+            placeholder="Choose date and time"
+            error={errors.startDateTime}
+            className="mb-4"
+          />
 
           {/* Tip box */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">

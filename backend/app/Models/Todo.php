@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 
-#[Fillable(['title', 'description', 'status', 'user_id'])]
+#[Fillable(['title', 'description', 'status', 'user_id', 'start_date_time'])]
 class Todo extends Model
 {
     use \Illuminate\Database\Eloquent\Factories\HasFactory;

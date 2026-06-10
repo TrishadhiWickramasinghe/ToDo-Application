@@ -24,6 +24,7 @@ class CreateTodoRequest extends FormRequest
         return [
             'title' => 'required|string|min:3|max:255',
             'description' => 'nullable|string|max:1000',
+            'startDateTime' => 'nullable|date',
         ];
     }
 
@@ -41,6 +42,7 @@ class CreateTodoRequest extends FormRequest
             'title.max' => 'Title must not exceed 255 characters',
             'description.string' => 'Description must be a string',
             'description.max' => 'Description must not exceed 1000 characters',
+            'startDateTime.date' => 'Start date and time must be a valid date',
         ];
     }
 }

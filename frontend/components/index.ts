@@ -5,6 +5,7 @@ export { Modal } from './common/Modal';
 export { Loader, SkeletonLoader } from './common/Loader';
 export { EmptyState } from './common/EmptyState';
 export { ToastProvider } from './common/Toast';
+export { DateTimePicker } from './common/DateTimePicker';
 
 // Layout Components
 export { Navbar } from './layout/Navbar';
